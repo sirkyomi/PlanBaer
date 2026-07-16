@@ -393,7 +393,7 @@ function printHtml(weekStart: string): string {
     return `<tr><th>${escapeHtml(employee.lastName)}, ${escapeHtml(employee.firstName)}</th>${cells}</tr>`
   }).join('')
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>PlanBär Dienstplan</title><style>
-    @page { size: A4 landscape; margin: 10mm; } *{box-sizing:border-box} body{font-family:"Segoe UI",sans-serif;color:#14213d;margin:0;font-size:10pt}
+    @page { margin: 10mm; } *{box-sizing:border-box} body{font-family:"Segoe UI",sans-serif;color:#14213d;margin:0;font-size:10pt}
     header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8mm} h1{font-size:20pt;margin:0;color:#1d4ed8} p{margin:2px 0;color:#475569}
     table{border-collapse:collapse;width:100%;table-layout:fixed} thead{display:table-header-group} th,td{border:1px solid #cbd5e1;padding:5px;vertical-align:top;page-break-inside:avoid}
     thead th{background:#e8f0ff;text-align:left} tbody th{width:18%;text-align:left;background:#f8fafc} td{height:12mm}.absence{font-weight:600}.vacation{color:#166534}.sick{color:#b91c1c}.training{color:#6d28d9}small{color:#64748b}
