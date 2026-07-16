@@ -103,8 +103,8 @@ Die GitHub-Actions-Pipeline prüft Pushes auf `main` und Pull Requests. Tags im 
 Für Veröffentlichungen verwendet die Pipeline automatisch das von GitHub Actions bereitgestellte `GITHUB_TOKEN`. Ein persönlicher Access-Token oder ein zusätzliches Repository-Secret ist nicht erforderlich. Ein Release wird beispielsweise so vorbereitet:
 
 ```powershell
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 Vor dem Taggen muss die Version in `package.json` zum Tag passen.

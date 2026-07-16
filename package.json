@@ -1,6 +1,6 @@
 {
   "name": "planbaer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Lokaler Schichtplaner für Kindertagesstätten",
   "main": "./out/main/index.js",
   "author": "PlanBär",
