@@ -16,7 +16,7 @@ export function Dashboard({ data, navigate }: { data: AppSnapshot; report: (resu
 
   return <div className="page dashboard-page">
     <PageHeader eyebrow="Guten Tag" title={data.settings.institutionName} description="Hier sehen Sie auf einen Blick, was in dieser Woche wichtig ist." actions={<Button onClick={() => navigate('planner')}><Plus size={18} weight="bold" /> Dienstplan öffnen</Button>} />
-    <section className="metric-grid" aria-label="Kennzahlen dieser Woche">
+    <section className="metric-grid" data-tour="week-overview" aria-label="Kennzahlen dieser Woche">
       <MetricCard label="Aktives Team" value={`${active.length}`} detail="Mitarbeitende" icon={<UsersThree size={23} />} />
       <MetricCard label="Geplant" value={formatDuration(planned)} detail={`von ${formatDuration(target)} Soll`} icon={<CalendarBlank size={23} />} tone="green" />
       <MetricCard label="Team-Saldo" value={formatDuration(totalBalance, true)} detail="inklusive Korrekturen" icon={<ChartLineUp size={23} />} tone={totalBalance >= 0 ? 'purple' : 'amber'} />
