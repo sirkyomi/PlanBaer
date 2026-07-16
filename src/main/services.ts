@@ -428,7 +428,7 @@ export async function printWeek(rawWeekStart: string): Promise<ActionResult> {
     const weekStart = weekStartSchema.parse(rawWeekStart)
     target = await createPrintWindow(weekStart)
     const result = await new Promise<{ success: boolean; reason: string }>((resolve) => {
-      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, pageSize: 'A4' }, (success, failureReason) => resolve({ success, reason: failureReason }))
+      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, usePrinterDefaultPageSize: true }, (success, failureReason) => resolve({ success, reason: failureReason }))
     })
     if (result.success) return ok('Der Dienstplan wurde an den Drucker übergeben.')
     if (result.reason === 'Print job canceled') return ok('Drucken wurde abgebrochen.')
