@@ -416,8 +416,13 @@ function disposePrintTarget(target: { window: BrowserWindow; file: string }): vo
   if (existsSync(target.file)) unlinkSync(target.file)
 }
 
-function printFailureMessage(reason: string): string {
-  if (reason === 'Invalid printer settings') return 'Die Druckereinstellungen sind ungültig. Bitte prüfen Sie den ausgewählten Drucker und versuchen Sie es erneut.'
+function isVirtualPrinter(name: string): boolean {
+  const normalized = name.toLocaleLowerCase('de-DE')
+  return normalized.includes('pdf') || normalized.includes('onenote') || normalized.includes('xps') || normalized.includes('fax')
+}
+
+function printFailureMessage(reason: string, printerName: string): string {
+  if (reason === 'Invalid printer settings') return `Die Druckereinstellungen für „${printerName}“ sind ungültig. Bitte prüfen Sie den Drucker in den Windows-Einstellungen.`
   if (reason === 'Print job failed') return 'Der Druckauftrag ist fehlgeschlagen. Bitte prüfen Sie, ob der Drucker erreichbar und druckbereit ist.'
   return reason ? `Der Druckauftrag ist fehlgeschlagen: ${reason}` : 'Der Druckauftrag ist aus unbekanntem Grund fehlgeschlagen.'
 }
@@ -427,12 +432,15 @@ export async function printWeek(rawWeekStart: string): Promise<ActionResult> {
   try {
     const weekStart = weekStartSchema.parse(rawWeekStart)
     target = await createPrintWindow(weekStart)
+    const printers = await target.window.webContents.getPrintersAsync()
+    if (!printers.length) return fail(new Error('Windows hat keinen eingerichteten Drucker gefunden.'))
+    const printer = printers.find((item) => !isVirtualPrinter(item.name)) ?? printers[0]
     const result = await new Promise<{ success: boolean; reason: string }>((resolve) => {
-      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, usePrinterDefaultPageSize: true }, (success, failureReason) => resolve({ success, reason: failureReason }))
+      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, usePrinterDefaultPageSize: true, deviceName: printer.name }, (success, failureReason) => resolve({ success, reason: failureReason }))
     })
     if (result.success) return ok('Der Dienstplan wurde an den Drucker übergeben.')
     if (result.reason === 'Print job canceled') return ok('Drucken wurde abgebrochen.')
-    return fail(new Error(printFailureMessage(result.reason)))
+    return fail(new Error(printFailureMessage(result.reason, printer.displayName || printer.name)))
   } catch (error) { return fail(error) }
   finally { if (target) disposePrintTarget(target) }
 }
