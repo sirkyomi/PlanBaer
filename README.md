@@ -100,11 +100,11 @@ Backups sollten regelmäßig auf einem vom Rechner getrennten Datenträger gespe
 
 Die GitHub-Actions-Pipeline prüft Pushes auf `main` und Pull Requests. Tags im Format `v*` lösen zusätzlich den Windows-Installer und die Veröffentlichung eines Releases aus.
 
-Für die Veröffentlichung muss im Repository das Secret `PLANBAER_RELEASE_TOKEN` mit Schreibzugriff auf Releases hinterlegt sein. Ein Release wird beispielsweise so vorbereitet:
+Für Veröffentlichungen verwendet die Pipeline automatisch das von GitHub Actions bereitgestellte `GITHUB_TOKEN`. Ein persönlicher Access-Token oder ein zusätzliches Repository-Secret ist nicht erforderlich. Ein Release wird beispielsweise so vorbereitet:
 
 ```powershell
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 Vor dem Taggen muss die Version in `package.json` zum Tag passen.
