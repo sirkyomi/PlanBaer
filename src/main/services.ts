@@ -393,7 +393,7 @@ function printHtml(weekStart: string): string {
     return `<tr><th>${escapeHtml(employee.lastName)}, ${escapeHtml(employee.firstName)}</th>${cells}</tr>`
   }).join('')
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>PlanBär Dienstplan</title><style>
-    @page { size: A4 landscape; margin: 10mm; } *{box-sizing:border-box} body{font-family:"Segoe UI",sans-serif;color:#14213d;margin:0;font-size:10pt}
+    @page { margin: 10mm; } *{box-sizing:border-box} body{font-family:"Segoe UI",sans-serif;color:#14213d;margin:0;font-size:10pt}
     header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8mm} h1{font-size:20pt;margin:0;color:#1d4ed8} p{margin:2px 0;color:#475569}
     table{border-collapse:collapse;width:100%;table-layout:fixed} thead{display:table-header-group} th,td{border:1px solid #cbd5e1;padding:5px;vertical-align:top;page-break-inside:avoid}
     thead th{background:#e8f0ff;text-align:left} tbody th{width:18%;text-align:left;background:#f8fafc} td{height:12mm}.absence{font-weight:600}.vacation{color:#166534}.sick{color:#b91c1c}.training{color:#6d28d9}small{color:#64748b}
@@ -411,25 +411,50 @@ async function createPrintWindow(weekStart: string): Promise<{ window: BrowserWi
   return { window, file }
 }
 
+function disposePrintTarget(target: { window: BrowserWindow; file: string }): void {
+  if (!target.window.isDestroyed()) target.window.destroy()
+  if (existsSync(target.file)) unlinkSync(target.file)
+}
+
+function isVirtualPrinter(name: string): boolean {
+  const normalized = name.toLocaleLowerCase('de-DE')
+  return normalized.includes('pdf') || normalized.includes('onenote') || normalized.includes('xps') || normalized.includes('fax')
+}
+
+function printFailureMessage(reason: string, printerName: string): string {
+  if (reason === 'Invalid printer settings') return `Die Druckereinstellungen für „${printerName}“ sind ungültig. Bitte prüfen Sie den Drucker in den Windows-Einstellungen.`
+  if (reason === 'Print job failed') return 'Der Druckauftrag ist fehlgeschlagen. Bitte prüfen Sie, ob der Drucker erreichbar und druckbereit ist.'
+  return reason ? `Der Druckauftrag ist fehlgeschlagen: ${reason}` : 'Der Druckauftrag ist aus unbekanntem Grund fehlgeschlagen.'
+}
+
 export async function printWeek(rawWeekStart: string): Promise<ActionResult> {
+  let target: { window: BrowserWindow; file: string } | undefined
   try {
     const weekStart = weekStartSchema.parse(rawWeekStart)
-    const target = await createPrintWindow(weekStart)
-    const success = await new Promise<boolean>((resolve) => target.window.webContents.print({ silent: false, printBackground: true, landscape: true }, resolve))
-    target.window.destroy(); unlinkSync(target.file)
-    return success ? ok('Der Dienstplan wurde an den Druckdialog übergeben.') : fail(new Error('Der Druck wurde abgebrochen oder ist fehlgeschlagen.'))
+    target = await createPrintWindow(weekStart)
+    const printers = await target.window.webContents.getPrintersAsync()
+    if (!printers.length) return fail(new Error('Windows hat keinen eingerichteten Drucker gefunden.'))
+    const printer = printers.find((item) => !isVirtualPrinter(item.name)) ?? printers[0]
+    const result = await new Promise<{ success: boolean; reason: string }>((resolve) => {
+      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, usePrinterDefaultPageSize: true, deviceName: printer.name }, (success, failureReason) => resolve({ success, reason: failureReason }))
+    })
+    if (result.success) return ok('Der Dienstplan wurde an den Drucker übergeben.')
+    if (result.reason === 'Print job canceled') return ok('Drucken wurde abgebrochen.')
+    return fail(new Error(printFailureMessage(result.reason, printer.displayName || printer.name)))
   } catch (error) { return fail(error) }
+  finally { if (target) disposePrintTarget(target) }
 }
 
 export async function exportWeekPdf(rawWeekStart: string): Promise<ActionResult> {
+  let target: { window: BrowserWindow; file: string } | undefined
   try {
     const weekStart = weekStartSchema.parse(rawWeekStart)
     const result = await dialog.showSaveDialog({ title: 'Dienstplan als PDF speichern', defaultPath: `PlanBaer-Dienstplan-${weekStart}.pdf`, filters: [{ name: 'PDF-Datei', extensions: ['pdf'] }] })
     if (result.canceled || !result.filePath) return ok('PDF-Export wurde abgebrochen.')
-    const target = await createPrintWindow(weekStart)
+    target = await createPrintWindow(weekStart)
     const pdf = await target.window.webContents.printToPDF({ landscape: true, pageSize: 'A4', printBackground: true, preferCSSPageSize: true, generateTaggedPDF: true })
     writeFileSync(result.filePath, pdf)
-    target.window.destroy(); unlinkSync(target.file)
     return ok('Dienstplan wurde als PDF gespeichert.')
   } catch (error) { return fail(error) }
+  finally { if (target) disposePrintTarget(target) }
 }
