@@ -1,0 +1,80 @@
+{
+  "name": "planbaer",
+  "version": "0.1.0",
+  "description": "Lokaler Schichtplaner für Kindertagesstätten",
+  "main": "./out/main/index.js",
+  "author": "PlanBär",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/planbaer-app/planbaer-releases.git"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "pnpm typecheck && pnpm test && electron-vite build",
+    "dist:win": "pnpm build && electron-builder --win nsis --publish never",
+    "release": "pnpm build && electron-builder --win nsis --publish always"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@radix-ui/react-dialog": "^1.1.19",
+    "@radix-ui/react-select": "^2.2.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-holidays": "^3.26.5",
+    "electron-updater": "^6.8.9",
+    "papaparse": "^5.5.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "recharts": "^3.9.2",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.10.1",
+    "@types/papaparse": "^5.3.16",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "jsdom": "^28.1.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.2",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.0"
+  },
+  "build": {
+    "appId": "de.planbaer.desktop",
+    "productName": "PlanBär",
+    "executableName": "PlanBaer",
+    "asar": true,
+    "files": ["out/**/*", "package.json"],
+    "directories": { "output": "dist" },
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "PlanBaer-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PlanBär",
+      "deleteAppDataOnUninstall": false,
+      "installerLanguages": ["de_DE"]
+    },
+    "publish": [{ "provider": "github", "owner": "planbaer-app", "repo": "planbaer-releases", "releaseType": "release", "channel": "latest" }]
+  }
+}
