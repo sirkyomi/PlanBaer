@@ -75,6 +75,6 @@
       "deleteAppDataOnUninstall": false,
       "installerLanguages": ["de_DE"]
     },
-    "publish": [{ "provider": "github", "owner": "planbaer-app", "repo": "planbaer-releases", "releaseType": "release", "channel": "latest" }]
+    "publish": [{ "provider": "github", "owner": "sirkyomi", "repo": "PlanBaer", "releaseType": "release", "channel": "latest" }]
   }
 }
