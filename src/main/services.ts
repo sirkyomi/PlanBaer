@@ -411,25 +411,42 @@ async function createPrintWindow(weekStart: string): Promise<{ window: BrowserWi
   return { window, file }
 }
 
+function disposePrintTarget(target: { window: BrowserWindow; file: string }): void {
+  if (!target.window.isDestroyed()) target.window.destroy()
+  if (existsSync(target.file)) unlinkSync(target.file)
+}
+
+function printFailureMessage(reason: string): string {
+  if (reason === 'Invalid printer settings') return 'Die Druckereinstellungen sind ungültig. Bitte prüfen Sie den ausgewählten Drucker und versuchen Sie es erneut.'
+  if (reason === 'Print job failed') return 'Der Druckauftrag ist fehlgeschlagen. Bitte prüfen Sie, ob der Drucker erreichbar und druckbereit ist.'
+  return reason ? `Der Druckauftrag ist fehlgeschlagen: ${reason}` : 'Der Druckauftrag ist aus unbekanntem Grund fehlgeschlagen.'
+}
+
 export async function printWeek(rawWeekStart: string): Promise<ActionResult> {
+  let target: { window: BrowserWindow; file: string } | undefined
   try {
     const weekStart = weekStartSchema.parse(rawWeekStart)
-    const target = await createPrintWindow(weekStart)
-    const success = await new Promise<boolean>((resolve) => target.window.webContents.print({ silent: false, printBackground: true, landscape: true }, resolve))
-    target.window.destroy(); unlinkSync(target.file)
-    return success ? ok('Der Dienstplan wurde an den Druckdialog übergeben.') : fail(new Error('Der Druck wurde abgebrochen oder ist fehlgeschlagen.'))
+    target = await createPrintWindow(weekStart)
+    const result = await new Promise<{ success: boolean; reason: string }>((resolve) => {
+      target!.window.webContents.print({ silent: false, printBackground: true, landscape: true, pageSize: 'A4' }, (success, failureReason) => resolve({ success, reason: failureReason }))
+    })
+    if (result.success) return ok('Der Dienstplan wurde an den Drucker übergeben.')
+    if (result.reason === 'Print job canceled') return ok('Drucken wurde abgebrochen.')
+    return fail(new Error(printFailureMessage(result.reason)))
   } catch (error) { return fail(error) }
+  finally { if (target) disposePrintTarget(target) }
 }
 
 export async function exportWeekPdf(rawWeekStart: string): Promise<ActionResult> {
+  let target: { window: BrowserWindow; file: string } | undefined
   try {
     const weekStart = weekStartSchema.parse(rawWeekStart)
     const result = await dialog.showSaveDialog({ title: 'Dienstplan als PDF speichern', defaultPath: `PlanBaer-Dienstplan-${weekStart}.pdf`, filters: [{ name: 'PDF-Datei', extensions: ['pdf'] }] })
     if (result.canceled || !result.filePath) return ok('PDF-Export wurde abgebrochen.')
-    const target = await createPrintWindow(weekStart)
+    target = await createPrintWindow(weekStart)
     const pdf = await target.window.webContents.printToPDF({ landscape: true, pageSize: 'A4', printBackground: true, preferCSSPageSize: true, generateTaggedPDF: true })
     writeFileSync(result.filePath, pdf)
-    target.window.destroy(); unlinkSync(target.file)
     return ok('Dienstplan wurde als PDF gespeichert.')
   } catch (error) { return fail(error) }
+  finally { if (target) disposePrintTarget(target) }
 }
