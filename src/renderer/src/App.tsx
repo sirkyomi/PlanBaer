@@ -8,6 +8,7 @@ import { Team } from './pages/Team'
 import { Ledger } from './pages/Ledger'
 import { Statistics } from './pages/Statistics'
 import { Settings } from './pages/Settings'
+import { IntroTour } from './components/IntroTour'
 
 export type PageProps = NonNullable<ReturnType<typeof usePlanBaer>['data']> extends infer _ ? {
   data: NonNullable<ReturnType<typeof usePlanBaer>['data']>
@@ -44,7 +45,7 @@ export default function App() {
       <div className="brand"><span className="brand__mark"><PawPrint size={25} weight="fill" /></span><span><strong>PlanBär</strong><small>Schichtplanung</small></span></div>
       <nav aria-label="Hauptnavigation">{navigation.map((item) => {
         const Icon = item.icon
-        return <button key={item.id} className={cx('nav-item', page === item.id && 'nav-item--active')} aria-current={page === item.id ? 'page' : undefined} onClick={() => setPage(item.id)}><Icon size={21} weight={page === item.id ? 'fill' : 'regular'} /><span>{item.label}</span></button>
+        return <button key={item.id} data-tour={`nav-${item.id}`} className={cx('nav-item', page === item.id && 'nav-item--active')} aria-current={page === item.id ? 'page' : undefined} onClick={() => setPage(item.id)}><Icon size={21} weight={page === item.id ? 'fill' : 'regular'} /><span>{item.label}</span></button>
       })}</nav>
       <div className="sidebar__footer"><span>Version {data.appVersion}</span></div>
     </aside>
@@ -56,6 +57,7 @@ export default function App() {
       {page === 'statistics' && <Statistics {...props} />}
       {page === 'settings' && <Settings {...props} />}
     </main>
+    <IntroTour navigate={setPage} />
     {notice && <div className={cx('toast', notice.ok ? 'toast--success' : 'toast--error')} role="status" aria-live="polite">{notice.ok ? <span className="toast__check">✓</span> : <WarningCircle size={20} />}<span>{notice.message}</span></div>}
   </div>
 }

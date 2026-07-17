@@ -46,18 +46,18 @@ export function Planner({ data, report }: { data: AppSnapshot; report: (result: 
   }
 
   return <div className="page planner-page">
-    <PageHeader eyebrow="Wochenplanung" title="Dienstplan" description="Schichten planen, Abwesenheiten eintragen und Ist-Zeiten bestätigen." actions={<><Button variant="secondary" onClick={() => void window.planBaer.printing.printWeek(weekStart).then(report)}><Printer size={18} /> Drucken</Button><Button variant="secondary" onClick={() => void window.planBaer.printing.exportPdf(weekStart).then(report)}><FilePdf size={18} /> PDF</Button>{!closed && <Button onClick={closeCurrentWeek}><CalendarCheck size={18} /> Woche abschließen</Button>}</>} />
+    <PageHeader eyebrow="Wochenplanung" title="Dienstplan" description="Schichten planen, Abwesenheiten eintragen und Ist-Zeiten bestätigen." actions={<><Button variant="secondary" onClick={() => void window.planBaer.printing.printWeek(weekStart).then(report)}><Printer size={18} /> Drucken</Button><Button variant="secondary" onClick={() => void window.planBaer.printing.exportPdf(weekStart).then(report)}><FilePdf size={18} /> PDF</Button>{!closed && <Button data-tour="week-close" onClick={closeCurrentWeek}><CalendarCheck size={18} /> Woche abschließen</Button>}</>} />
 
-    <Card className="planner-toolbar">
+    <Card className="planner-toolbar" data-tour="planner-tools">
       <div className="week-switcher"><Button variant="ghost" size="icon" aria-label="Vorherige Woche" onClick={() => setWeekStart(addIsoDays(weekStart, -7))}><CaretLeft size={20} /></Button><div><strong>{new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'long'}).format(new Date(`${dates[0]}T12:00:00`))} – {new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'long',year:'numeric'}).format(new Date(`${dates[4]}T12:00:00`))}</strong><span>Kalenderwoche {getIsoWeek(dates[0])}</span></div><Button variant="ghost" size="icon" aria-label="Nächste Woche" onClick={() => setWeekStart(addIsoDays(weekStart, 7))}><CaretRight size={20} /></Button></div>
       <div className="toolbar-separator" />
       <div className="template-picker" aria-label="Schichtvorlagen"><span>Vorlage</span>{data.templates.map((template) => <button key={template.id} className={cx('template-chip', selectedTemplate === template.id && 'template-chip--active')} aria-pressed={selectedTemplate === template.id} onClick={() => setSelectedTemplate(template.id)}><i style={{ background: template.color }} />{template.name}<small>{minuteToTime(template.startMinute)}–{minuteToTime(template.endMinute)}</small></button>)}<Button variant="ghost" size="icon" aria-label="Schichtvorlagen bearbeiten" title="Schichtvorlagen bearbeiten" onClick={() => setManagingTemplates(true)}><PencilSimple size={17} /></Button></div>
       {!closed && <Button variant="ghost" size="small" onClick={copyWeek}><Copy size={17} /> Vorwoche übernehmen</Button>}
-      {closed && <Badge tone="success"><CheckCircle size={15} weight="fill" /> Abgeschlossen</Badge>}
+      {closed && <span data-tour="week-closed"><Badge tone="success"><CheckCircle size={15} weight="fill" /> Abgeschlossen</Badge></span>}
     </Card>
 
-    {active.length === 0 ? <Card className="planner-empty"><h2>Noch niemand im Team</h2><p>Legen Sie im Bereich „Team“ zuerst Mitarbeitende und Vertragsstunden an.</p></Card> :
-      <Card className="schedule-wrap"><div className="schedule-grid" style={{ gridTemplateColumns: '220px repeat(5, minmax(172px, 1fr))' }} role="grid" aria-label={`Dienstplan ab ${dates[0]}`}>
+    {active.length === 0 ? <Card className="planner-empty" data-tour="planner-board"><h2>Noch niemand im Team</h2><p>Legen Sie im Bereich „Team“ zuerst Mitarbeitende und Vertragsstunden an.</p></Card> :
+      <Card className="schedule-wrap" data-tour="planner-board"><div className="schedule-grid" style={{ gridTemplateColumns: '220px repeat(5, minmax(172px, 1fr))' }} role="grid" aria-label={`Dienstplan ab ${dates[0]}`}>
         <div className="schedule-head schedule-head--person" role="columnheader">Mitarbeitende</div>
         {dates.map((date, index) => { const holiday = data.holidays.find((item) => item.date === date); return <div key={date} className={cx('schedule-head', holiday && 'schedule-head--holiday')} role="columnheader"><strong>{dayNames[index]}</strong><span>{date.slice(8,10)}.{date.slice(5,7)}.</span>{holiday && <small title={holiday.name}>{holiday.name}</small>}</div> })}
         {active.map((employee) => {
